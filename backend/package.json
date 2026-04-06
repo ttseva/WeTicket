@@ -1,0 +1,32 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "main": "src/app/server.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "dev": "nodemon src/app/server.js",
+    "start": "node src/app/server.js",
+    "docs": "jsdoc -c jsdoc.json",
+    "docs:clean": "node -e \"require('fs').rmSync('docs/api', { recursive: true, force: true })\"",
+    "docs:build": "npm run docs:clean && npm run docs",
+    "test": "echo \"No tests configured yet\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.1",
+    "express": "^5.2.1",
+    "helmet": "^8.1.0",
+    "morgan": "^1.10.1"
+  },
+  "devDependencies": {
+    "jsdoc": "^4.0.5",
+    "nodemon": "^3.1.14"
+  }
+}

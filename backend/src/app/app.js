@@ -1,0 +1,29 @@
+const express = require("express");
+const cors = require("cors");
+const helmet = require("helmet");
+const morgan = require("morgan");
+
+const apiRoutes = require("../http/routes");
+
+/**
+ * Creates and configures the Express application.
+ * @returns {object}
+ */
+function createApp() {
+  const app = express();
+
+  app.use(helmet());
+  app.use(cors());
+  app.use(express.json());
+  app.use(morgan("dev"));
+
+  app.get("/health", (req, res) => {
+    res.status(200).json({ status: "ok" });
+  });
+
+  app.use("/v1", apiRoutes);
+
+  return app;
+}
+
+module.exports = { createApp };

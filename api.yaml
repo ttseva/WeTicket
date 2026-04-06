@@ -1,0 +1,912 @@
+openapi: 3.0.0
+info:
+  title: TicketBooking API
+  description: API для веб-приложения резервирования билетов на мероприятия
+  version: 1.0.0
+  contact:
+    name: Support Team
+    email: support@ticketbooking.ru
+servers:
+  - url: https://api.ticketbooking.ru/v1
+    description: Production server
+  - url: http://localhost:8080/v1
+    description: Development server
+
+tags:
+  - name: Auth
+    description: Аутентификация и регистрация
+  - name: Users
+    description: Управление профилем пользователя
+  - name: Events
+    description: Каталог мероприятий
+  - name: Bookings
+    description: Бронирование билетов
+  - name: Groups
+    description: Групповые покупки
+  - name: Admin
+    description: Администрирование
+  - name: Tickets
+    description: Управление билетами
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        phone:
+          type: string
+        role:
+          type: string
+          enum: [client, organizer, admin]
+        createdAt:
+          type: string
+          format: date-time
+
+    Event:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+          enum: [theatre, cinema, concert, conference]
+        dateTime:
+          type: string
+          format: date-time
+        duration:
+          type: integer
+        venue:
+          type: string
+        address:
+          type: string
+        minAge:
+          type: integer
+        posterUrl:
+          type: string
+        status:
+          type: string
+          enum: [draft, active, cancelled, completed]
+
+    Seat:
+      type: object
+      properties:
+        seatId:
+          type: string
+        row:
+          type: integer
+        number:
+          type: integer
+        sector:
+          type: string
+        price:
+          type: number
+          format: float
+        status:
+          type: string
+          enum: [free, blocked, group_blocked, sold]
+
+    Booking:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        event:
+          $ref: '#/components/schemas/Event'
+        totalAmount:
+          type: number
+        status:
+          type: string
+          enum: [pending, paid, cancelled, expired, refunded]
+        createdAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+
+    GroupSession:
+      type: object
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+        inviteLink:
+          type: string
+        totalSeats:
+          type: integer
+        participantsCount:
+          type: integer
+        status:
+          type: string
+          enum: [active, completed, expired]
+        expiresAt:
+          type: string
+          format: date-time
+
+security:
+  - bearerAuth: []
+
+paths:
+  # ==================== AUTH ====================
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Регистрация нового пользователя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, firstName, lastName]
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                phone:
+                  type: string
+      responses:
+        '200':
+          description: Успешная регистрация
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userId:
+                    type: string
+                  message:
+                    type: string
+        '400':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Вход в систему
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Успешный вход
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+                  refreshToken:
+                    type: string
+                  expiresIn:
+                    type: integer
+                  user:
+                    $ref: '#/components/schemas/User'
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Выход из системы
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Успешный выход
+
+  # ==================== USERS ====================
+  /users/me:
+    get:
+      tags: [Users]
+      summary: Получение профиля текущего пользователя
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Профиль пользователя
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Не авторизован
+
+    put:
+      tags: [Users]
+      summary: Обновление профиля
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                phone:
+                  type: string
+      responses:
+        '200':
+          description: Профиль обновлён
+
+  /users/me/bookings:
+    get:
+      tags: [Users]
+      summary: История бронирований пользователя
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, paid, cancelled, refunded]
+      responses:
+        '200':
+          description: Список бронирований
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  bookings:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Booking'
+                  pagination:
+                    type: object
+
+  # ==================== EVENTS ====================
+  /events:
+    get:
+      tags: [Events]
+      summary: Список мероприятий с фильтрацией
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [theatre, cinema, concert, conference]
+        - name: city
+          in: query
+          schema:
+            type: string
+        - name: dateFrom
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: dateTo
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: sort
+          in: query
+          schema:
+            type: string
+            default: date
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Список мероприятий
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Event'
+                  pagination:
+                    type: object
+
+  /events/{eventId}:
+    get:
+      tags: [Events]
+      summary: Детальная информация о мероприятии
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Информация о мероприятии
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        '404':
+          description: Мероприятие не найдено
+
+  /events/{eventId}/seats:
+    get:
+      tags: [Events]
+      summary: Схема зала со статусами мест
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Схема зала
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  eventId:
+                    type: string
+                  seats:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Seat'
+
+  # ==================== BOOKINGS ====================
+  /bookings:
+    post:
+      tags: [Bookings]
+      summary: Создание нового бронирования
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [eventId, seatIds]
+              properties:
+                eventId:
+                  type: string
+                seatIds:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Бронирование создано
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  bookingId:
+                    type: string
+                  status:
+                    type: string
+                  expiresAt:
+                    type: string
+                  totalAmount:
+                    type: number
+                  paymentUrl:
+                    type: string
+        '409':
+          description: Места уже заняты
+
+  /bookings/{bookingId}:
+    get:
+      tags: [Bookings]
+      summary: Получение информации о бронировании
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Информация о бронировании
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+
+    delete:
+      tags: [Bookings]
+      summary: Отмена неоплаченного бронирования
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Бронирование отменено
+
+  /bookings/{bookingId}/pay:
+    post:
+      tags: [Bookings]
+      summary: Оплата бронирования
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [paymentMethod]
+              properties:
+                paymentMethod:
+                  type: string
+                  enum: [card, wallet]
+                cardToken:
+                  type: string
+      responses:
+        '200':
+          description: Оплата успешна
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  bookingId:
+                    type: string
+                  status:
+                    type: string
+                  paidAt:
+                    type: string
+                  tickets:
+                    type: array
+                    items:
+                      type: object
+        '422':
+          description: Ошибка оплаты
+
+  # ==================== GROUPS ====================
+  /groups:
+    post:
+      tags: [Groups]
+      summary: Создание групповой сессии
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [eventId, seatIds]
+              properties:
+                eventId:
+                  type: string
+                seatIds:
+                  type: array
+                  items:
+                    type: string
+                expiresInHours:
+                  type: integer
+                  default: 48
+      responses:
+        '200':
+          description: Групповая сессия создана
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessionId:
+                    type: string
+                  inviteLink:
+                    type: string
+                  expiresAt:
+                    type: string
+                  totalSeats:
+                    type: integer
+
+  /groups/my:
+    get:
+      tags: [Groups]
+      summary: Список групповых сессий пользователя
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Список групповых сессий
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GroupSession'
+
+  /groups/join/{inviteLink}:
+    get:
+      tags: [Groups]
+      summary: Присоединение к группе по ссылке
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: inviteLink
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Информация для присоединения
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessionId:
+                    type: string
+                  event:
+                    $ref: '#/components/schemas/Event'
+                  assignedSeat:
+                    $ref: '#/components/schemas/Seat'
+                  organizer:
+                    type: object
+                  expiresAt:
+                    type: string
+
+  /groups/{sessionId}:
+    get:
+      tags: [Groups]
+      summary: Информация о групповой сессии
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Детальная информация о группе
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessionId:
+                    type: string
+                  status:
+                    type: string
+                  totalSeats:
+                    type: integer
+                  participantsCount:
+                    type: integer
+                  participants:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        userId:
+                          type: string
+                        name:
+                          type: string
+                        paid:
+                          type: boolean
+                        seatId:
+                          type: string
+                  expiresAt:
+                    type: string
+
+  # ==================== ADMIN ====================
+  /admin/events:
+    post:
+      tags: [Admin]
+      summary: Создание мероприятия
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, description, category, dateTime, venue, address]
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                category:
+                  type: string
+                dateTime:
+                  type: string
+                  format: date-time
+                duration:
+                  type: integer
+                venue:
+                  type: string
+                address:
+                  type: string
+                minAge:
+                  type: integer
+                posterUrl:
+                  type: string
+      responses:
+        '200':
+          description: Мероприятие создано
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  eventId:
+                    type: string
+                  status:
+                    type: string
+                  message:
+                    type: string
+
+  /admin/events/{eventId}/seats:
+    post:
+      tags: [Admin]
+      summary: Загрузка схемы зала
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rows, seatsPerRow]
+              properties:
+                rows:
+                  type: integer
+                seatsPerRow:
+                  type: integer
+                priceMap:
+                  type: object
+                vipSeats:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Схема загружена
+
+  /admin/events/{eventId}/cancel:
+    post:
+      tags: [Admin]
+      summary: Отмена мероприятия с возвратом средств
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Мероприятие отменено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  affectedBookings:
+                    type: integer
+                  refundInitiated:
+                    type: boolean
+
+  /admin/statistics:
+    get:
+      tags: [Admin]
+      summary: Статистика продаж
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [week, month, year]
+            default: month
+        - name: eventId
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Статистика
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  summary:
+                    type: object
+                  salesByCategory:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        category:
+                          type: string
+                        count:
+                          type: integer
+                        revenue:
+                          type: number
+                  topEvents:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        eventId:
+                          type: string
+                        title:
+                          type: string
+                        sold:
+                          type: integer
+                        revenue:
+                          type: number
+
+  # ==================== TICKETS ====================
+  /tickets/{ticketId}:
+    get:
+      tags: [Tickets]
+      summary: Получение информации о билете
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Информация о билете
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ticketId:
+                    type: string
+                  event:
+                    $ref: '#/components/schemas/Event'
+                  seat:
+                    $ref: '#/components/schemas/Seat'
+                  qrCode:
+                    type: string
+                  isUsed:
+                    type: boolean
+                  issuedAt:
+                    type: string
+
+  /tickets/validate:
+    post:
+      tags: [Tickets]
+      summary: Валидация QR-кода билета (для входа)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [qrCode]
+              properties:
+                qrCode:
+                  type: string
+      responses:
+        '200':
+          description: Результат валидации
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                  ticketId:
+                    type: string
+                  event:
+                    type: object
+                  seat:
+                    type: string
+                  isUsed:
+                    type: boolean

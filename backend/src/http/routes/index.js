@@ -1,4 +1,7 @@
 const express = require("express");
+const authRoutes = require("../../modules/auth/auth.routes");
+const usersRoutes = require("../../modules/users/users.routes");
+const adminRoutes = require("../../modules/admin/admin.routes");
 
 const router = express.Router();
 
@@ -13,5 +16,9 @@ router.get("/", (req, res) => {
     message: "TicketBooking API v1 is initialized",
   });
 });
+
+router.use("/auth", authRoutes);
+router.use("/users", usersRoutes);
+router.use("/admin", adminRoutes);
 
 module.exports = router;

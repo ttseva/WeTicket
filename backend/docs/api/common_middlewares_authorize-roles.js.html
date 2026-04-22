@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Home</title>
+    <title>JSDoc: Source: common/middlewares/authorize-roles.js</title>
 
     <script src="scripts/prettify/prettify.js"> </script>
     <script src="scripts/prettify/lang-css.js"> </script>
@@ -17,61 +17,44 @@
 
 <div id="main">
 
-    <h1 class="page-title">Home</h1>
+    <h1 class="page-title">Source: common/middlewares/authorize-roles.js</h1>
 
     
 
 
 
     
-
-
-    <h3> </h3>
-
-
-
-
-
-
-
-
-
-
-    
-
-
-
-
     <section>
-        <article><h1>Backend (TicketBooking)</h1>
-<h2>Quick start</h2>
-<ol>
-<li>Install dependencies:</li>
-</ol>
-<pre class="prettyprint source lang-bash"><code>npm install
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * Middleware проверки ролей пользователя.
+ * Возвращает 403, если роль пользователя отсутствует в списке разрешённых.
+ *
+ * @param {...string} allowedRoles Допустимые роли (например: `admin`, `organizer`).
+ * @returns {Function} Express middleware.
+ *
+ * @example
+ * router.get("/admin/statistics", authorizeRoles("admin"), handler);
+ */
+function authorizeRoles(...allowedRoles) {
+  return (req, res, next) => {
+    const userRole = req.user?.role;
+
+    if (!userRole || !allowedRoles.includes(userRole)) {
+      return res.status(403).json({
+        error: "FORBIDDEN",
+        message: "Недостаточно прав для выполнения операции",
+      });
+    }
+
+    return next();
+  };
+}
+
+module.exports = { authorizeRoles };
 </code></pre>
-<ol start="2">
-<li>Create local env file from template:</li>
-</ol>
-<pre class="prettyprint source lang-bash"><code>copy .env.example .env
-</code></pre>
-<ol start="3">
-<li>Run in development:</li>
-</ol>
-<pre class="prettyprint source lang-bash"><code>npm run dev
-</code></pre>
-<p>Server starts at <code>http://localhost:8080</code>.</p>
-<h2>JSDoc</h2>
-<p>Generate docs from JSDoc comments:</p>
-<pre class="prettyprint source lang-bash"><code>npm run docs
-</code></pre>
-<p>Generated static documentation appears in <code>docs/api</code>.</p>
-<p>Rebuild docs from scratch:</p>
-<pre class="prettyprint source lang-bash"><code>npm run docs:build
-</code></pre></article>
+        </article>
     </section>
-
-
 
 
 

@@ -1,13 +1,13 @@
 openapi: 3.0.0
 info:
-  title: TicketBooking API
+  title: WeTicket API
   description: API для веб-приложения резервирования билетов на мероприятия
   version: 1.0.0
   contact:
     name: Support Team
-    email: support@ticketbooking.ru
+    email: support@weticket.ru
 servers:
-  - url: https://api.ticketbooking.ru/v1
+  - url: https://api.weticket.ru/v1
     description: Production server
   - url: http://localhost:8080/v1
     description: Development server

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Home</title>
+    <title>JSDoc: Source: common/utils/pricing.js</title>
 
     <script src="scripts/prettify/prettify.js"> </script>
     <script src="scripts/prettify/lang-css.js"> </script>
@@ -17,61 +17,41 @@
 
 <div id="main">
 
-    <h1 class="page-title">Home</h1>
+    <h1 class="page-title">Source: common/utils/pricing.js</h1>
 
     
 
 
 
     
-
-
-    <h3> </h3>
-
-
-
-
-
-
-
-
-
-
-    
-
-
-
-
     <section>
-        <article><h1>Backend (TicketBooking)</h1>
-<h2>Quick start</h2>
-<ol>
-<li>Install dependencies:</li>
-</ol>
-<pre class="prettyprint source lang-bash"><code>npm install
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * Рассчитывает итоговую сумму бронирования по выбранным местам.
+ *
+ * @param {Array&lt;{seatId: string, price: number}>} seats Массив мест с ценой.
+ * @param {number} [serviceFeePercent=0] Процент сервисного сбора.
+ * @returns {{subtotal: number, fee: number, total: number}} Разбивка итоговой стоимости.
+ *
+ * @example
+ * const result = calculateBookingTotal(
+ *   [{ seatId: "s-1", price: 1500 }, { seatId: "s-2", price: 2000 }],
+ *   5
+ * );
+ * // => { subtotal: 3500, fee: 175, total: 3675 }
+ */
+function calculateBookingTotal(seats, serviceFeePercent = 0) {
+  const subtotal = seats.reduce((sum, seat) => sum + Number(seat.price || 0), 0);
+  const fee = Math.round((subtotal * serviceFeePercent) / 100);
+  const total = subtotal + fee;
+
+  return { subtotal, fee, total };
+}
+
+module.exports = { calculateBookingTotal };
 </code></pre>
-<ol start="2">
-<li>Create local env file from template:</li>
-</ol>
-<pre class="prettyprint source lang-bash"><code>copy .env.example .env
-</code></pre>
-<ol start="3">
-<li>Run in development:</li>
-</ol>
-<pre class="prettyprint source lang-bash"><code>npm run dev
-</code></pre>
-<p>Server starts at <code>http://localhost:8080</code>.</p>
-<h2>JSDoc</h2>
-<p>Generate docs from JSDoc comments:</p>
-<pre class="prettyprint source lang-bash"><code>npm run docs
-</code></pre>
-<p>Generated static documentation appears in <code>docs/api</code>.</p>
-<p>Rebuild docs from scratch:</p>
-<pre class="prettyprint source lang-bash"><code>npm run docs:build
-</code></pre></article>
+        </article>
     </section>
-
-
 
 
 

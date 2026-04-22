@@ -12,6 +12,13 @@
     "docs": "jsdoc -c jsdoc.json",
     "docs:clean": "node -e \"require('fs').rmSync('docs/api', { recursive: true, force: true })\"",
     "docs:build": "npm run docs:clean && npm run docs",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:push": "prisma db push",
+    "db:seed": "node prisma/seed.js",
+    "db:studio": "prisma studio",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
     "test": "echo \"No tests configured yet\""
   },
   "keywords": [],
@@ -19,14 +26,19 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@prisma/client": "^6.19.3",
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^17.4.1",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.3.2",
     "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.3",
     "morgan": "^1.10.1"
   },
   "devDependencies": {
     "jsdoc": "^4.0.5",
-    "nodemon": "^3.1.14"
+    "nodemon": "^3.1.14",
+    "prisma": "^6.19.3"
   }
 }

@@ -13,7 +13,14 @@ function sanitizeUser(user) {
   };
 }
 
+function ensureBodyObject(body) {
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    throw new HttpError(400, "Request body must be a JSON object");
+  }
+}
+
 function validateRegisterBody(body) {
+  ensureBodyObject(body);
   const requiredFields = ["email", "password", "firstName", "lastName"];
   for (const field of requiredFields) {
     if (!body[field] || typeof body[field] !== "string") {
@@ -27,8 +34,16 @@ function validateRegisterBody(body) {
 }
 
 function validateLoginBody(body) {
+  ensureBodyObject(body);
   if (!body.email || !body.password) {
     throw new HttpError(400, "Email and password are required");
+  }
+}
+
+function validateRefreshBody(body) {
+  ensureBodyObject(body);
+  if (!body.refreshToken || typeof body.refreshToken !== "string") {
+    throw new HttpError(400, "Field 'refreshToken' is required");
   }
 }
 
@@ -62,6 +77,7 @@ async function login(req, res, next) {
 
 async function refresh(req, res, next) {
   try {
+    validateRefreshBody(req.body);
     const result = await authService.refresh(req.body.refreshToken);
     res.status(200).json({
       accessToken: result.accessToken,
@@ -75,6 +91,7 @@ async function refresh(req, res, next) {
 
 async function logout(req, res, next) {
   try {
+    validateRefreshBody(req.body);
     await authService.logout(req.auth.userId, req.body.refreshToken);
     res.status(200).json({ message: "Logged out successfully" });
   } catch (error) {

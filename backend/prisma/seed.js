@@ -1,14 +1,20 @@
 const { PrismaClient, UserRole, EventCategory, EventStatus, SeatStatus } = require("@prisma/client");
+const bcrypt = require("bcryptjs");
 
 const prisma = new PrismaClient();
 
 async function main() {
+  const adminPasswordHash = await bcrypt.hash("Admin12345!", 10);
+  const organizerPasswordHash = await bcrypt.hash("Organizer12345!", 10);
+
   const adminUser = await prisma.user.upsert({
     where: { email: "admin@weticket.ru" },
-    update: {},
+    update: {
+      passwordHash: adminPasswordHash,
+    },
     create: {
       email: "admin@weticket.ru",
-      passwordHash: "dev_hash_change_me",
+      passwordHash: adminPasswordHash,
       firstName: "System",
       lastName: "Admin",
       role: UserRole.admin,
@@ -23,10 +29,12 @@ async function main() {
 
   const organizerUser = await prisma.user.upsert({
     where: { email: "organizer@weticket.ru" },
-    update: {},
+    update: {
+      passwordHash: organizerPasswordHash,
+    },
     create: {
       email: "organizer@weticket.ru",
-      passwordHash: "dev_hash_change_me",
+      passwordHash: organizerPasswordHash,
       firstName: "Main",
       lastName: "Organizer",
       role: UserRole.organizer,

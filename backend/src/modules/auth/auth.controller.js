@@ -1,5 +1,6 @@
 const authService = require("./auth.service");
 const { HttpError } = require("../../common/errors/http-error");
+const DEFAULT_ACCESS_TOKEN_EXPIRES_IN = 15 * 60;
 
 function sanitizeUser(user) {
   return {
@@ -47,14 +48,36 @@ function validateRefreshBody(body) {
   }
 }
 
+function validateLogoutBody(body) {
+  if (body === undefined) {
+    return;
+  }
+  ensureBodyObject(body);
+  if (body.refreshToken !== undefined && typeof body.refreshToken !== "string") {
+    throw new HttpError(400, "Field 'refreshToken' must be a string");
+  }
+}
+
+function getAccessTokenTtlSeconds() {
+  const raw = process.env.JWT_ACCESS_TTL || "15m";
+  const match = /^(\d+)([smhd])$/.exec(raw);
+  if (!match) {
+    return DEFAULT_ACCESS_TOKEN_EXPIRES_IN;
+  }
+
+  const value = Number(match[1]);
+  const unit = match[2];
+  const multipliers = { s: 1, m: 60, h: 3600, d: 86400 };
+  return value * multipliers[unit];
+}
+
 async function register(req, res, next) {
   try {
     validateRegisterBody(req.body);
     const result = await authService.register(req.body);
-    res.status(201).json({
-      accessToken: result.accessToken,
-      refreshToken: result.refreshToken,
-      user: sanitizeUser(result.user),
+    res.status(200).json({
+      userId: result.user.id,
+      message: "User registered successfully",
     });
   } catch (error) {
     next(error);
@@ -68,6 +91,7 @@ async function login(req, res, next) {
     res.status(200).json({
       accessToken: result.accessToken,
       refreshToken: result.refreshToken,
+      expiresIn: getAccessTokenTtlSeconds(),
       user: sanitizeUser(result.user),
     });
   } catch (error) {
@@ -82,6 +106,7 @@ async function refresh(req, res, next) {
     res.status(200).json({
       accessToken: result.accessToken,
       refreshToken: result.refreshToken,
+      expiresIn: getAccessTokenTtlSeconds(),
       user: sanitizeUser(result.user),
     });
   } catch (error) {
@@ -91,9 +116,9 @@ async function refresh(req, res, next) {
 
 async function logout(req, res, next) {
   try {
-    validateRefreshBody(req.body);
-    await authService.logout(req.auth.userId, req.body.refreshToken);
-    res.status(200).json({ message: "Logged out successfully" });
+    validateLogoutBody(req.body);
+    await authService.logout(req.auth.userId, req.body?.refreshToken);
+    res.status(200).json({ message: "Logout successful" });
   } catch (error) {
     next(error);
   }

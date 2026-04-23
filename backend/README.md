@@ -61,6 +61,22 @@ npm run db:studio   # open Prisma Studio
 
 If Docker is not available, install PostgreSQL locally and set your own `DATABASE_URL` in `.env`.
 
+## Background expiration job
+
+A lightweight in-process background job runs with the API server and handles:
+
+- expiration of pending bookings (`status: pending` -> `expired`)
+- expiration of group sessions (`status: active` -> `expired`)
+- seat release for expired bookings/sessions (`blocked`/`group_blocked` -> `free`)
+- group payment progress sync (`participantsCount`) and completion status
+
+Environment variables:
+
+```bash
+EXPIRATION_JOB_ENABLED=true
+EXPIRATION_JOB_INTERVAL_MS=60000
+```
+
 ## Security and access basics
 
 Implemented in backend:

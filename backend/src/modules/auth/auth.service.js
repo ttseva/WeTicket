@@ -118,16 +118,13 @@ async function refresh(refreshToken) {
 }
 
 async function logout(userId, refreshToken) {
-  if (!refreshToken) {
-    return;
+  const where = { userId, revokedAt: null };
+  if (refreshToken) {
+    where.tokenHash = hashToken(refreshToken);
   }
 
   await prisma.refreshToken.updateMany({
-    where: {
-      userId,
-      tokenHash: hashToken(refreshToken),
-      revokedAt: null,
-    },
+    where,
     data: { revokedAt: new Date() },
   });
 }

@@ -1,0 +1,421 @@
+{
+  "info": {
+    "name": "WeTicket API",
+    "_postman_id": "7f8a4f24-47c9-4fd2-9e73-f9fef6f97fdd",
+    "description": "Core requests for WeTicket backend smoke/manual testing.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080/v1" },
+    { "key": "accessToken", "value": "" },
+    { "key": "refreshToken", "value": "" },
+    { "key": "adminAccessToken", "value": "" },
+    { "key": "eventId", "value": "" },
+    { "key": "bookingId", "value": "" },
+    { "key": "ticketId", "value": "" },
+    { "key": "groupSessionId", "value": "" },
+    { "key": "inviteLink", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "1. Auth",
+      "item": [
+        {
+          "name": "Register user",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user1@test.ru\",\n  \"password\": \"User12345!\",\n  \"firstName\": \"Ivan\",\n  \"lastName\": \"Ivanov\",\n  \"phone\": \"+79990000000\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login user",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.accessToken) pm.collectionVariables.set('accessToken', json.accessToken);",
+                  "if (json.refreshToken) pm.collectionVariables.set('refreshToken', json.refreshToken);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user1@test.ru\",\n  \"password\": \"User12345!\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Refresh token",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/refresh",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": "{{baseUrl}}/auth/logout",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Users",
+      "item": [
+        {
+          "name": "Get current user",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/users/me"
+          }
+        },
+        {
+          "name": "Update current user",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": "{{baseUrl}}/users/me",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Ivan Updated\",\n  \"phone\": \"+79991112233\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get my bookings",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/users/me/bookings?page=1&limit=20"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Events",
+      "item": [
+        {
+          "name": "List events",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.events && json.events.length > 0) pm.collectionVariables.set('eventId', json.events[0].id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/events?page=1&limit=20&sort=date"
+          }
+        },
+        {
+          "name": "Get event by id",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/events/{{eventId}}"
+          }
+        },
+        {
+          "name": "Get event seats",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/events/{{eventId}}/seats"
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Bookings + Payments + Tickets",
+      "item": [
+        {
+          "name": "Create booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.bookingId) pm.collectionVariables.set('bookingId', json.bookingId);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": "{{baseUrl}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"seatIds\": [\"replace-with-seat-id-from-events-seats\"]\n}"
+            }
+          }
+        },
+        {
+          "name": "Get booking",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/bookings/{{bookingId}}"
+          }
+        },
+        {
+          "name": "Pay booking (success)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.tickets && json.tickets.length > 0) pm.collectionVariables.set('ticketId', json.tickets[0].ticketId);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": "{{baseUrl}}/bookings/{{bookingId}}/pay",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentMethod\": \"card\",\n  \"cardToken\": \"tok_success\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Pay booking (mock fail)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": "{{baseUrl}}/bookings/{{bookingId}}/pay",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentMethod\": \"card\",\n  \"cardToken\": \"fail_test\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get ticket by id",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/tickets/{{ticketId}}"
+          }
+        },
+        {
+          "name": "Validate ticket qr",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": "{{baseUrl}}/tickets/validate",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"qrCode\": \"replace-with-qr-from-get-ticket\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Groups",
+      "item": [
+        {
+          "name": "Create group session",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.sessionId) pm.collectionVariables.set('groupSessionId', json.sessionId);",
+                  "if (json.inviteLink) pm.collectionVariables.set('inviteLink', json.inviteLink);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": "{{baseUrl}}/groups",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"seatIds\": [\"replace-with-seat-id-1\", \"replace-with-seat-id-2\"],\n  \"expiresInHours\": 24\n}"
+            }
+          }
+        },
+        {
+          "name": "Get my group sessions",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/groups/my"
+          }
+        },
+        {
+          "name": "Join group by invite",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/groups/join/{{inviteLink}}"
+          }
+        },
+        {
+          "name": "Get group session details",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/groups/{{groupSessionId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Admin",
+      "item": [
+        {
+          "name": "Login as admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.accessToken) pm.collectionVariables.set('adminAccessToken', json.accessToken);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@weticket.ru\",\n  \"password\": \"Admin12345!\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Admin ping",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminAccessToken}}" }],
+            "url": "{{baseUrl}}/admin/ping"
+          }
+        },
+        {
+          "name": "Create event (admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.eventId) pm.collectionVariables.set('eventId', json.eventId);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminAccessToken}}" }
+            ],
+            "url": "{{baseUrl}}/admin/events",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Admin Event\",\n  \"description\": \"Created from Postman\",\n  \"category\": \"concert\",\n  \"dateTime\": \"2026-12-01T18:00:00.000Z\",\n  \"duration\": 120,\n  \"venue\": \"Main Hall\",\n  \"address\": \"Lenina 10\",\n  \"minAge\": 12\n}"
+            }
+          }
+        },
+        {
+          "name": "Upload seat map",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminAccessToken}}" }
+            ],
+            "url": "{{baseUrl}}/admin/events/{{eventId}}/seats",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rows\": 5,\n  \"seatsPerRow\": 8,\n  \"priceMap\": { \"1\": 3000, \"2\": 2500, \"3\": 2000, \"4\": 1500, \"5\": 1200 },\n  \"vipSeats\": [\"1-1\", \"1-2\"]\n}"
+            }
+          }
+        },
+        {
+          "name": "Admin statistics",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminAccessToken}}" }],
+            "url": "{{baseUrl}}/admin/statistics?period=month"
+          }
+        },
+        {
+          "name": "Cancel event",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminAccessToken}}" }],
+            "url": "{{baseUrl}}/admin/events/{{eventId}}/cancel"
+          }
+        }
+      ]
+    }
+  ]
+}

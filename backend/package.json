@@ -19,7 +19,8 @@
     "db:studio": "prisma studio",
     "db:up": "docker compose up -d postgres",
     "db:down": "docker compose down",
-    "test": "echo \"No tests configured yet\""
+    "test": "jest --runInBand",
+    "test:watch": "jest --watch"
   },
   "keywords": [],
   "author": "",
@@ -37,6 +38,7 @@
     "morgan": "^1.10.1"
   },
   "devDependencies": {
+    "jest": "^30.3.0",
     "jsdoc": "^4.0.5",
     "nodemon": "^3.1.14",
     "prisma": "^6.19.3"

@@ -1,0 +1,16 @@
+import { configureStore } from "@reduxjs/toolkit";
+import { authReducer } from "@shared/store/authSlice";
+import { baseApi } from "@shared/api/baseApi";
+import { rtkQueryErrorLogger } from "@shared/store/rtkQueryErrorLogger";
+
+export const store = configureStore({
+  reducer: {
+    auth: authReducer,
+    [baseApi.reducerPath]: baseApi.reducer
+  },
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware().concat(baseApi.middleware, rtkQueryErrorLogger)
+});
+
+export type RootState = ReturnType<typeof store.getState>;
+export type AppDispatch = typeof store.dispatch;

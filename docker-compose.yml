@@ -1,0 +1,53 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: weticket-postgres
+    environment:
+      POSTGRES_DB: weticket_dev
+      POSTGRES_USER: weticket
+      POSTGRES_PASSWORD: weticket
+    ports:
+      - "5433:5432"
+    volumes:
+      - weticket_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U weticket -d weticket_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+    container_name: weticket-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PORT: 8080
+      NODE_ENV: production
+      DATABASE_URL: postgresql://weticket:weticket@postgres:5432/weticket_dev?schema=public
+      JWT_ACCESS_SECRET: replace_with_strong_access_secret
+      JWT_REFRESH_SECRET: replace_with_strong_refresh_secret
+      JWT_ACCESS_TTL: 15m
+      JWT_REFRESH_TTL: 7d
+      EXPIRATION_JOB_ENABLED: "true"
+      EXPIRATION_JOB_INTERVAL_MS: "60000"
+    ports:
+      - "8080:8080"
+    command: sh -c "npm run db:push && npm run db:seed && npm run start"
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: weticket-frontend
+    depends_on:
+      - backend
+    environment:
+      VITE_API_BASE_URL: http://localhost:8080/v1
+      VITE_APP_PORT: 5174
+    ports:
+      - "5174:5174"
+
+volumes:
+  weticket_pgdata:

@@ -44,16 +44,20 @@ export function ProfileBookingsPage(): JSX.Element {
 
       {!!data && data.bookings.length > 0 && (
         <>
-          <ul style={{ display: "grid", gap: 10, paddingLeft: 18 }}>
+          <ul className="content-list">
             {data.bookings.map((booking) => (
               <li key={booking.id}>
-                <strong>{booking.event.title}</strong>{" "}
-                <span className="muted">({booking.status})</span> —{" "}
-                <Link to={`/bookings/${booking.id}`}>Открыть</Link>
+                <strong>{booking.event.title}</strong>
+                <span className={`status-badge status-badge--${booking.status}`} style={{ marginLeft: 8 }}>
+                  {booking.status}
+                </span>
+                <div style={{ marginTop: 8 }}>
+                  <Link to={`/bookings/${booking.id}`}>Открыть</Link>
+                </div>
               </li>
             ))}
           </ul>
-          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          <div className="pagination" style={{ marginTop: 16 }}>
             <button disabled={page <= 1} onClick={() => setPage((value) => value - 1)}>
               Назад
             </button>

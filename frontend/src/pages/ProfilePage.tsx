@@ -44,7 +44,7 @@ export function ProfilePage(): JSX.Element {
   }
 
   return (
-    <section className="card" style={{ maxWidth: 680 }}>
+    <section className="card auth-card auth-card--wide">
       <h1>Личный кабинет</h1>
       <p className="muted">Редактирование профиля пользователя.</p>
 
@@ -52,7 +52,7 @@ export function ProfilePage(): JSX.Element {
       {isError && <p>Не удалось загрузить профиль.</p>}
 
       {user && (
-        <form onSubmit={handleSubmit} style={{ display: "grid", gap: 10 }}>
+        <form onSubmit={handleSubmit} className="form-grid">
           <label>
             Email
             <input value={user.email} disabled style={{ width: "100%", marginTop: 4, padding: 8 }} />
@@ -81,7 +81,7 @@ export function ProfilePage(): JSX.Element {
               style={{ width: "100%", marginTop: 4, padding: 8 }}
             />
           </label>
-          <button type="submit" disabled={isSaving} style={{ width: "fit-content" }}>
+          <button type="submit" className="btn-primary" disabled={isSaving} style={{ width: "fit-content" }}>
             {isSaving ? "Сохраняем..." : "Сохранить"}
           </button>
         </form>

@@ -105,7 +105,14 @@ async function getMyBookings(req, res, next) {
         skip,
         take: limit,
         orderBy: { createdAt: "desc" },
-        include: { event: true },
+        include: {
+          event: true,
+          items: {
+            include: {
+              ticket: { select: { id: true } },
+            },
+          },
+        },
       }),
       prisma.booking.count({ where }),
     ]);
@@ -117,6 +124,12 @@ async function getMyBookings(req, res, next) {
       status: booking.status,
       createdAt: booking.createdAt,
       expiresAt: booking.expiresAt,
+      tickets:
+        booking.status === "paid"
+          ? booking.items
+              .map((item) => (item.ticket ? { ticketId: item.ticket.id } : null))
+              .filter(Boolean)
+          : [],
     }));
 
     res.status(200).json({

@@ -40,7 +40,19 @@ async function createGroupSession(leaderId, payload) {
   const expiresInHours = Number(payload.expiresInHours) || 48;
   const expiresAt = new Date(Date.now() + expiresInHours * 60 * 60 * 1000);
 
+  if (uniqueSeatIds.length < 3 || uniqueSeatIds.length > 20) {
+    throw new HttpError(400, "Group block must contain between 3 and 20 seats");
+  }
+
   return prisma.$transaction(async (tx) => {
+    const leader = await tx.user.findUnique({ where: { id: leaderId }, select: { role: true } });
+    if (!leader) {
+      throw new HttpError(404, "User not found");
+    }
+    if (leader.role === "admin" || leader.role === "organizer") {
+      throw new HttpError(403, "Organizers and admins cannot book seats");
+    }
+
     const event = await tx.event.findUnique({ where: { id: eventId } });
     if (!event) {
       throw new HttpError(404, "Event not found");
@@ -94,6 +106,9 @@ async function createGroupSession(leaderId, payload) {
 async function getMyGroupSessions(leaderId) {
   const sessions = await prisma.groupSession.findMany({
     where: { leaderId },
+    include: {
+      event: { select: { id: true, title: true } },
+    },
     orderBy: { createdAt: "desc" },
   });
 
@@ -105,6 +120,10 @@ async function getMyGroupSessions(leaderId) {
       participantsCount: session.participantsCount,
       status: session.status,
       expiresAt: session.expiresAt,
+      event: {
+        id: session.event.id,
+        title: session.event.title,
+      },
     })),
   };
 }
@@ -149,10 +168,11 @@ async function getGroupSessionDetails(requestUserId, sessionId) {
   const session = await prisma.groupSession.findUnique({
     where: { id: sessionId },
     include: {
+      event: { select: { id: true, title: true } },
       bookings: {
         include: {
           user: true,
-          items: true,
+          items: { include: { seat: true } },
         },
       },
     },
@@ -165,12 +185,16 @@ async function getGroupSessionDetails(requestUserId, sessionId) {
     throw new HttpError(403, "Only session organizer can view session details");
   }
 
-  const participants = session.bookings.map((booking) => ({
-    userId: booking.userId,
-    name: `${booking.user.firstName} ${booking.user.lastName}`.trim(),
-    paid: booking.status === "paid",
-    seatId: booking.items[0]?.seatId || null,
-  }));
+  const participants = session.bookings.map((booking) => {
+    const seat = booking.items[0]?.seat;
+    return {
+      userId: booking.userId,
+      name: `${booking.user.firstName} ${booking.user.lastName}`.trim(),
+      paid: booking.status === "paid",
+      seatId: booking.items[0]?.seatId || null,
+      seatLabel: seat ? `ряд ${seat.rowNumber}, место ${seat.seatNumber}` : null,
+    };
+  });
 
   const paidCount = participants.filter((item) => item.paid).length;
   if (paidCount !== session.participantsCount) {
@@ -182,6 +206,8 @@ async function getGroupSessionDetails(requestUserId, sessionId) {
 
   return {
     sessionId: session.id,
+    inviteLink: session.inviteLink,
+    event: { id: session.event.id, title: session.event.title },
     status: session.status,
     totalSeats: session.totalSeats,
     participantsCount: paidCount,

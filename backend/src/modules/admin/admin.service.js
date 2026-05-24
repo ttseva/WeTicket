@@ -83,6 +83,66 @@ async function uploadSeats(eventId, payload) {
   });
 }
 
+async function updateEvent(eventId, payload) {
+  const event = await prisma.event.findUnique({ where: { id: eventId } });
+  if (!event) {
+    throw new HttpError(404, "Event not found");
+  }
+  if (event.status === "cancelled") {
+    throw new HttpError(422, "Cancelled event cannot be edited");
+  }
+
+  const data = {};
+  if (payload.title !== undefined) {
+    data.title = payload.title;
+  }
+  if (payload.description !== undefined) {
+    data.description = payload.description;
+  }
+  if (payload.category !== undefined) {
+    if (!EVENT_CATEGORIES.includes(payload.category)) {
+      throw new HttpError(400, "Invalid event category");
+    }
+    data.category = payload.category;
+  }
+  if (payload.dateTime !== undefined) {
+    data.dateTime = new Date(payload.dateTime);
+  }
+  if (payload.duration !== undefined) {
+    data.duration = Number(payload.duration);
+  }
+  if (payload.venue !== undefined) {
+    data.venue = payload.venue;
+  }
+  if (payload.address !== undefined) {
+    data.address = payload.address;
+  }
+  if (payload.city !== undefined) {
+    data.city = payload.city;
+  }
+  if (payload.minAge !== undefined) {
+    data.minAge = Number(payload.minAge);
+  }
+  if (payload.posterUrl !== undefined) {
+    data.posterUrl = payload.posterUrl;
+  }
+
+  if (Object.keys(data).length === 0) {
+    throw new HttpError(400, "No fields to update");
+  }
+
+  const updated = await prisma.event.update({
+    where: { id: eventId },
+    data,
+  });
+
+  return {
+    eventId: updated.id,
+    status: updated.status,
+    message: "Event updated successfully",
+  };
+}
+
 async function cancelEvent(eventId) {
   return prisma.$transaction(async (tx) => {
     const event = await tx.event.findUnique({ where: { id: eventId } });
@@ -194,6 +254,7 @@ async function getStatistics({ period = "month", eventId }) {
 
 module.exports = {
   createEvent,
+  updateEvent,
   uploadSeats,
   cancelEvent,
   getStatistics,

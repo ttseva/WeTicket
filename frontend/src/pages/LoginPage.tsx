@@ -40,10 +40,10 @@ export function LoginPage(): JSX.Element {
   }
 
   return (
-    <section className="card" style={{ maxWidth: 480, margin: "0 auto" }}>
+    <section className="card auth-card">
       <h1>Вход</h1>
       <p className="muted">Введите данные аккаунта, чтобы продолжить.</p>
-      <form onSubmit={handleSubmit} style={{ display: "grid", gap: 12 }}>
+      <form onSubmit={handleSubmit} className="form-grid">
         <label>
           Email
           <input
@@ -51,7 +51,6 @@ export function LoginPage(): JSX.Element {
             type="email"
             value={form.email}
             onChange={(event) => setForm((prev) => ({ ...prev, email: event.target.value }))}
-            style={{ width: "100%", padding: 10, marginTop: 4 }}
           />
         </label>
         <label>
@@ -61,13 +60,12 @@ export function LoginPage(): JSX.Element {
             type="password"
             value={form.password}
             onChange={(event) => setForm((prev) => ({ ...prev, password: event.target.value }))}
-            style={{ width: "100%", padding: 10, marginTop: 4 }}
           />
         </label>
 
-        {submitError && <p style={{ color: "#dc2626", margin: 0 }}>{submitError}</p>}
+        {submitError && <p className="text-error">{submitError}</p>}
 
-        <button type="submit" disabled={isLoading} style={{ padding: 10 }}>
+        <button type="submit" className="btn-primary" disabled={isLoading}>
           {isLoading ? "Входим..." : "Войти"}
         </button>
       </form>

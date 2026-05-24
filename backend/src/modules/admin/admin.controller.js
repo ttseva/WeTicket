@@ -34,6 +34,16 @@ async function createEvent(req, res, next) {
   }
 }
 
+async function updateEvent(req, res, next) {
+  try {
+    ensureBodyObject(req.body);
+    const result = await adminService.updateEvent(req.params.eventId, req.body);
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+}
+
 async function uploadSeats(req, res, next) {
   try {
     validateUploadSeatsBody(req.body);
@@ -67,6 +77,7 @@ async function getStatistics(req, res, next) {
 
 module.exports = {
   createEvent,
+  updateEvent,
   uploadSeats,
   cancelEvent,
   getStatistics,

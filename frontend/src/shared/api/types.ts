@@ -64,6 +64,10 @@ export type Seat = {
   status: SeatStatus;
 };
 
+export type BookingTicketRef = {
+  ticketId: string;
+};
+
 export type Booking = {
   id: string;
   event: Event;
@@ -71,6 +75,7 @@ export type Booking = {
   status: BookingStatus;
   createdAt: string;
   expiresAt: string;
+  tickets?: BookingTicketRef[];
 };
 
 export type CreateBookingRequest = {
@@ -110,10 +115,16 @@ export type GroupSession = {
   participantsCount: number;
   status: GroupSessionStatus;
   expiresAt: string;
+  event?: {
+    id: string;
+    title: string;
+  };
 };
 
 export type GroupSessionDetails = {
   sessionId: string;
+  inviteLink: string;
+  event: { id: string; title: string };
   status: GroupSessionStatus;
   totalSeats: number;
   participantsCount: number;
@@ -122,6 +133,7 @@ export type GroupSessionDetails = {
     name: string;
     paid: boolean;
     seatId: string | null;
+    seatLabel: string | null;
   }>;
   expiresAt: string;
 };

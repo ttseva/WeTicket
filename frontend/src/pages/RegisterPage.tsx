@@ -41,17 +41,16 @@ export function RegisterPage(): JSX.Element {
   }
 
   return (
-    <section className="card" style={{ maxWidth: 560, margin: "0 auto" }}>
+    <section className="card auth-card auth-card--wide">
       <h1>Регистрация</h1>
       <p className="muted">Создайте аккаунт, чтобы бронировать билеты и отслеживать заказы.</p>
-      <form onSubmit={handleSubmit} style={{ display: "grid", gap: 12 }}>
+      <form onSubmit={handleSubmit} className="form-grid">
         <label>
           Имя
           <input
             required
             value={form.firstName}
             onChange={(event) => setForm((prev) => ({ ...prev, firstName: event.target.value }))}
-            style={{ width: "100%", padding: 10, marginTop: 4 }}
           />
         </label>
         <label>
@@ -60,7 +59,6 @@ export function RegisterPage(): JSX.Element {
             required
             value={form.lastName}
             onChange={(event) => setForm((prev) => ({ ...prev, lastName: event.target.value }))}
-            style={{ width: "100%", padding: 10, marginTop: 4 }}
           />
         </label>
         <label>
@@ -70,7 +68,6 @@ export function RegisterPage(): JSX.Element {
             type="email"
             value={form.email}
             onChange={(event) => setForm((prev) => ({ ...prev, email: event.target.value }))}
-            style={{ width: "100%", padding: 10, marginTop: 4 }}
           />
         </label>
         <label>
@@ -81,7 +78,6 @@ export function RegisterPage(): JSX.Element {
             minLength={6}
             value={form.password}
             onChange={(event) => setForm((prev) => ({ ...prev, password: event.target.value }))}
-            style={{ width: "100%", padding: 10, marginTop: 4 }}
           />
         </label>
         <label>
@@ -89,13 +85,12 @@ export function RegisterPage(): JSX.Element {
           <input
             value={form.phone}
             onChange={(event) => setForm((prev) => ({ ...prev, phone: event.target.value }))}
-            style={{ width: "100%", padding: 10, marginTop: 4 }}
           />
         </label>
 
-        {submitError && <p style={{ color: "#dc2626", margin: 0 }}>{submitError}</p>}
+        {submitError && <p className="text-error">{submitError}</p>}
 
-        <button type="submit" disabled={isLoading} style={{ padding: 10 }}>
+        <button type="submit" className="btn-primary" disabled={isLoading}>
           {isLoading ? "Регистрируем..." : "Зарегистрироваться"}
         </button>
       </form>

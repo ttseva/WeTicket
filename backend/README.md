@@ -47,6 +47,28 @@ Server starts at `http://localhost:8080`.
 - Local test DB: PostgreSQL in `docker-compose.yml`
 - Main connection string is in `.env` via `DATABASE_URL`
 
+### Cloud DB Connection (Neon.tech)
+
+If you want to use cloud-hosted serverless PostgreSQL (e.g. Neon.tech), follow these steps:
+
+1. Obtain connection strings (pooled and direct) from your Neon.tech console dashboard.
+2. Update your `backend/.env` file with these variables:
+   ```env
+   # Pooler connection for application runtime
+   DATABASE_URL="postgresql://<user>:<password>@<host>-pooler.<region>.aws.neon.tech/neondb?sslmode=require"
+
+   # Direct connection for schema migrations
+   DIRECT_URL="postgresql://<user>:<password>@<host>.<region>.aws.neon.tech/neondb?sslmode=require"
+   ```
+3. Run migrations on the cloud database:
+   ```bash
+   npx prisma migrate deploy
+   ```
+4. Run the seed script to populate the cloud database:
+   ```bash
+   npm run db:seed
+   ```
+
 Useful commands:
 
 ```bash

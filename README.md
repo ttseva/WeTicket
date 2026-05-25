@@ -29,31 +29,45 @@ docker compose down -v
 
 ## Локальный запуск без Docker
 
-### Backend
+### Быстрый запуск (Frontend + Backend одновременно)
 
-```bash
-cd backend
-npm install
-copy .env.example .env
-npm run db:up
-npm run db:migrate
-npm run db:seed
-npm run dev
+Из корневой директории проекта:
+
+1. Установите зависимости в корневой директории, backend и frontend:
+   ```bash
+   npm install
+   npm install --prefix backend
+   npm install --prefix frontend
+   ```
+
+2. Настройте файлы окружения `.env`:
+   ```bash
+   cp backend/.env.example backend/.env
+   cp frontend/.env.example frontend/.env
+   ```
+
+3. Запустите базу данных, выполните миграции и сидирование (из директории `backend`):
+   ```bash
+   cd backend
+   npm run db:up
+   npm run db:migrate
+   npm run db:seed
+   cd ..
+   ```
+
+4. Запустите оба приложения одной командой из корня:
+   ```bash
+   npm run dev
+   ```
+
+## Учетные записи:
+### Зритель
 ```
-
-### Frontend
-
-```bash
-cd frontend
-npm install
-copy .env.example .env
-npm run dev
+Email: client@weticket.ru
+Password: Client12345!
 ```
-
-## Минимальные unit-тесты (Jest, frontend)
-
-```bash
-cd frontend
-npm install
-npm test
+### Организатор
+```
+Email: organizer@weticket.ru 
+Password: Organizer12345!
 ```

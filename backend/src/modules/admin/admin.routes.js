@@ -6,11 +6,12 @@ const adminController = require("./admin.controller");
 
 const router = express.Router();
 
-router.use(authenticate, authorizeRoles(["admin"]));
+router.use(authenticate, authorizeRoles(["admin", "organizer"]));
 router.get("/ping", (req, res) => {
   res.status(200).json({ message: "Admin access granted" });
 });
 router.post("/events", adminController.createEvent);
+router.put("/events/:eventId", adminController.updateEvent);
 router.post("/events/:eventId/seats", adminController.uploadSeats);
 router.post("/events/:eventId/cancel", adminController.cancelEvent);
 router.get("/statistics", adminController.getStatistics);

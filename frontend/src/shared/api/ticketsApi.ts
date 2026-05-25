@@ -1,4 +1,5 @@
 import { baseApi } from "@shared/api/baseApi";
+import { env } from "@shared/config/env";
 import type { Event, Seat } from "@shared/api/types";
 
 type TicketDetails = {
@@ -39,3 +40,21 @@ export const ticketsApi = baseApi.injectEndpoints({
 });
 
 export const { useGetTicketQuery, useValidateTicketMutation } = ticketsApi;
+
+export async function downloadTicketPdf(ticketId: string, accessToken: string | null): Promise<void> {
+  const response = await fetch(`${env.apiBaseUrl}/tickets/${ticketId}/pdf`, {
+    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {}
+  });
+
+  if (!response.ok) {
+    throw new Error("PDF download failed");
+  }
+
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `ticket-${ticketId}.pdf`;
+  link.click();
+  URL.revokeObjectURL(url);
+}

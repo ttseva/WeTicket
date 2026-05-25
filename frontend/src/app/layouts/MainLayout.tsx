@@ -2,17 +2,37 @@ import { Link, Outlet } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@app/hooks";
 import { useGetMeQuery, useLogoutMutation } from "@shared/api/authApi";
 import { logout, setCurrentUser } from "@shared/store/authSlice";
-import { useEffect } from "react";
+import type { UserRole } from "@shared/api/types";
+import { useEffect, useMemo } from "react";
 
-const navItems = [
+type NavItem = {
+  to: string;
+  label: string;
+  roles?: UserRole[];
+};
+
+const allNavItems: NavItem[] = [
   { to: "/", label: "Каталог" },
   { to: "/profile", label: "Профиль" },
   { to: "/profile/tickets", label: "Мои билеты" },
   { to: "/profile/bookings", label: "Мои бронирования" },
-  { to: "/groups/my", label: "Группы" },
-  { to: "/admin", label: "Админ" },
-  { to: "/tickets/validate", label: "Валидация билета" }
+  { to: "/groups/my", label: "Групповые покупки" },
+  { to: "/organizer", label: "Организатор", roles: ["organizer", "admin"] },
+  { to: "/tickets/validate", label: "Валидация билета", roles: ["organizer", "admin"] }
 ];
+
+function roleLabel(role: UserRole): string {
+  switch (role) {
+    case "organizer":
+      return "организатор";
+    case "client":
+      return "клиент";
+    case "admin":
+      return "система";
+    default:
+      return role;
+  }
+}
 
 export function MainLayout(): JSX.Element {
   const dispatch = useAppDispatch();
@@ -22,6 +42,12 @@ export function MainLayout(): JSX.Element {
   const { data: me, isError: meRequestFailed } = useGetMeQuery(undefined, {
     skip: !accessToken
   });
+
+  const navItems = useMemo(
+    () =>
+      allNavItems.filter((item) => !item.roles || (user && item.roles.includes(user.role))),
+    [user]
+  );
 
   useEffect(() => {
     if (me) {
@@ -45,29 +71,33 @@ export function MainLayout(): JSX.Element {
   }
 
   return (
-    <div>
-      <header className="card" style={{ borderRadius: 0, borderLeft: 0, borderRight: 0 }}>
-        <div className="container" style={{ display: "flex", gap: 20, alignItems: "center" }}>
-          <Link to="/" style={{ fontWeight: 700 }}>
+    <div className="app-shell">
+      <header className="site-header">
+        <div className="container site-header__inner">
+          <Link to="/" className="site-logo">
             WeTicket
           </Link>
-          {navItems.map((item) => (
-            <Link key={item.to} to={item.to} className="muted">
-              {item.label}
-            </Link>
-          ))}
-          <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>
+          <nav className="site-nav">
+            {navItems.map((item) => (
+              <Link key={item.to} to={item.to}>
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+          <div className="site-header__actions">
             {user && (
-              <span className="muted">
-                {user.firstName} ({user.role})
+              <span className="user-badge">
+                {user.firstName} · {roleLabel(user.role)}
               </span>
             )}
             {accessToken ? (
-              <button onClick={handleLogout} disabled={isLoading}>
+              <button type="button" className="btn-ghost" onClick={handleLogout} disabled={isLoading}>
                 {isLoading ? "Выходим..." : "Выйти"}
               </button>
             ) : (
-              <Link to="/auth/login">Войти</Link>
+              <Link to="/auth/login" className="link-button">
+                Войти
+              </Link>
             )}
           </div>
         </div>

@@ -50,6 +50,16 @@ export const adminApi = baseApi.injectEndpoints({
         body
       })
     }),
+    updateEvent: builder.mutation<
+      { eventId: string; status: string; message: string },
+      { eventId: string; body: Partial<CreateEventRequest> }
+    >({
+      query: ({ eventId, body }) => ({
+        url: `/admin/events/${eventId}`,
+        method: "PUT",
+        body
+      })
+    }),
     cancelEvent: builder.mutation<
       { message: string; affectedBookings: number; refundInitiated: boolean },
       string
@@ -73,6 +83,7 @@ export const adminApi = baseApi.injectEndpoints({
 
 export const {
   useCreateEventMutation,
+  useUpdateEventMutation,
   useUploadSeatsMutation,
   useCancelEventMutation,
   useGetStatisticsQuery

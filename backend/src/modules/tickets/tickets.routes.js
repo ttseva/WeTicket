@@ -6,6 +6,7 @@ const { authenticate } = require("../../common/middlewares/authenticate");
 const router = express.Router();
 
 router.use(authenticate);
+router.get("/:ticketId/pdf", ticketsController.getTicketPdf);
 router.get("/:ticketId", ticketsController.getTicket);
 router.post("/validate", ticketsController.validateTicket);
 

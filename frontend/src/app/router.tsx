@@ -3,7 +3,7 @@ import { RequireAuth } from "@app/guards/RequireAuth";
 import { RequireGuest } from "@app/guards/RequireGuest";
 import { RequireRole } from "@app/guards/RequireRole";
 import { MainLayout } from "@app/layouts/MainLayout";
-import { AdminPage } from "@pages/AdminPage";
+import { OrganizerPage } from "@pages/OrganizerPage";
 import { BookingCheckoutPage } from "@pages/BookingCheckoutPage";
 import { EventDetailsPage } from "@pages/EventDetailsPage";
 import { EventsCatalogPage } from "@pages/EventsCatalogPage";
@@ -46,11 +46,11 @@ export const router = createBrowserRouter([
           { path: "profile/tickets", element: <MyTicketsPage /> },
           { path: "tickets/:ticketId", element: <TicketDetailsPage /> },
           { path: "groups/my", element: <GroupsPage /> },
-          { path: "groups/:sessionId", element: <GroupSessionPage /> },
           { path: "groups/join/:inviteLink", element: <GroupJoinPage /> },
+          { path: "groups/:sessionId", element: <GroupSessionPage /> },
           {
-            element: <RequireRole allowedRoles={["admin"]} />,
-            children: [{ path: "admin", element: <AdminPage /> }]
+            element: <RequireRole allowedRoles={["organizer", "admin"]} />,
+            children: [{ path: "organizer", element: <OrganizerPage /> }]
           },
           {
             element: <RequireRole allowedRoles={["admin", "organizer"]} />,

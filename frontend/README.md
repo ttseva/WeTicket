@@ -42,7 +42,7 @@ npm test
   - `bookings`
   - `groups`
   - `profile`
-  - `admin`
+  - `organizer`
   - `tickets`
 
 ## Current folder structure
@@ -67,4 +67,4 @@ frontend/
 3. Booking flow (create/cancel/pay + pending timer UX)
 4. Group purchase flow (create/join/status)
 5. Profile and bookings history
-6. Admin and tickets flows
+6. Organizer and tickets flows

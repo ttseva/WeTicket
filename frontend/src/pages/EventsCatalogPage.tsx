@@ -49,21 +49,19 @@ export function EventsCatalogPage(): JSX.Element {
   const totalPages = data?.pagination.totalPages ?? 1;
 
   return (
-    <section style={{ display: "grid", gap: 16 }}>
+    <section className="page-stack">
       <section className="card">
         <h1>Каталог мероприятий</h1>
         <p className="muted">Поиск, фильтры и переход на карточку события.</p>
-        <form onSubmit={handleSearchSubmit} style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <form onSubmit={handleSearchSubmit} className="form-row form-row--filters">
           <input
             value={searchInput}
             onChange={(event) => setSearchInput(event.target.value)}
             placeholder="Поиск по названию, описанию, площадке"
-            style={{ flex: 1, minWidth: 240, padding: 10 }}
           />
           <select
             value={filters.category ?? ""}
             onChange={(event) => updateParam("category", event.target.value || undefined)}
-            style={{ padding: 10 }}
           >
             <option value="">Все категории</option>
             {categories.map((item) => (
@@ -75,41 +73,38 @@ export function EventsCatalogPage(): JSX.Element {
           <select
             value={filters.sort ?? "date"}
             onChange={(event) => updateParam("sort", event.target.value)}
-            style={{ padding: 10 }}
           >
             <option value="date">Сначала ближайшие</option>
             <option value="date_desc">Сначала поздние</option>
             <option value="title">По названию</option>
           </select>
-          <button type="submit">Найти</button>
+          <button type="submit" className="btn-primary">
+            Найти
+          </button>
         </form>
       </section>
 
-      {isLoading && <section className="card">Загрузка мероприятий...</section>}
-      {isError && <section className="card">Не удалось загрузить каталог.</section>}
+      {isLoading && <section className="card state-message">Загрузка мероприятий...</section>}
+      {isError && <section className="card state-message">Не удалось загрузить каталог.</section>}
 
       {!!data && (
         <>
-          <section
-            style={{
-              display: "grid",
-              gap: 12,
-              gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))"
-            }}
-          >
+          <section className="card-grid">
             {data.events.map((event) => (
-              <article key={event.id} className="card">
-                <h3 style={{ marginTop: 0 }}>{event.title}</h3>
-                <p className="muted" style={{ margin: "8px 0" }}>
+              <article key={event.id} className="card event-card card--hover">
+                <h3>{event.title}</h3>
+                <p className="muted event-card__meta">
                   {new Date(event.dateTime).toLocaleString("ru-RU")} · {event.venue}
                 </p>
-                <p>{event.description.slice(0, 120)}...</p>
-                <Link to={`/events/${event.id}`}>Открыть карточку</Link>
+                <p className="event-card__desc">{event.description.slice(0, 120)}...</p>
+                <Link to={`/events/${event.id}`} className="card-link">
+                  Открыть карточку →
+                </Link>
               </article>
             ))}
           </section>
 
-          <section className="card" style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          <section className="card pagination">
             <button disabled={page <= 1} onClick={() => updateParam("page", String(page - 1))}>
               Назад
             </button>

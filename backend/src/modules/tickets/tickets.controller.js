@@ -14,6 +14,17 @@ function validateQrBody(body) {
   }
 }
 
+async function getTicketPdf(req, res, next) {
+  try {
+    const result = await ticketsService.getTicketPdf(req.auth.userId, req.params.ticketId);
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="${result.filename}"`);
+    res.status(200).send(result.buffer);
+  } catch (error) {
+    next(error);
+  }
+}
+
 async function getTicket(req, res, next) {
   try {
     const result = await ticketsService.getTicketById(req.auth.userId, req.params.ticketId);
@@ -33,4 +44,4 @@ async function validateTicket(req, res, next) {
   }
 }
 
-module.exports = { getTicket, validateTicket };
+module.exports = { getTicket, getTicketPdf, validateTicket };

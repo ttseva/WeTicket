@@ -25,6 +25,16 @@ function bookingExpiresAt() {
   return new Date(Date.now() + BOOKING_TTL_MINUTES * 60 * 1000);
 }
 
+async function assertClientCanBook(tx, userId) {
+  const user = await tx.user.findUnique({ where: { id: userId }, select: { role: true } });
+  if (!user) {
+    throw new HttpError(404, "User not found");
+  }
+  if (user.role === "admin" || user.role === "organizer") {
+    throw new HttpError(403, "Organizers and admins cannot book seats");
+  }
+}
+
 async function createBooking(userId, payload) {
   const { eventId, seatIds, groupSessionId } = payload;
   const uniqueSeatIds = [...new Set(seatIds)];
@@ -32,6 +42,8 @@ async function createBooking(userId, payload) {
   const now = new Date();
 
   return prisma.$transaction(async (tx) => {
+    await assertClientCanBook(tx, userId);
+
     const event = await tx.event.findUnique({ where: { id: eventId } });
     if (!event) {
       throw new HttpError(404, "Event not found");

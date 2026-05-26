@@ -3,8 +3,8 @@ services:
     name: weticket-backend
     env: node
     plan: free
-    buildCommand: npm install && npm run db:generate --prefix backend
-    startCommand: npm run db:migrate --prefix backend && npm run db:seed --prefix backend && npm run start --prefix backend
+    buildCommand: npm install --prefix backend && npm run db:generate --prefix backend
+    startCommand: npx prisma migrate deploy --schema=backend/prisma/schema.prisma && npm run db:seed --prefix backend && npm run start --prefix backend
     envVars:
       - key: PORT
         value: 8080

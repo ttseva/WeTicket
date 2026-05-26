@@ -158,6 +158,9 @@ async function createBooking(userId, payload) {
       totalAmount: Number(booking.totalAmount),
       paymentUrl: `/v1/bookings/${booking.id}/pay`,
     };
+  }, {
+    maxWait: 10000,
+    timeout: 15000,
   });
 }
 
@@ -364,6 +367,9 @@ async function payBooking(userId, bookingId, paymentMethod, cardToken) {
         qrCode: ticket.qrCode,
       })),
     };
+  }, {
+    maxWait: 10000,
+    timeout: 15000,
   });
 }
 

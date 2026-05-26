@@ -85,46 +85,68 @@ async function getTicketById(userId, ticketId) {
   };
 }
 
-function escapePdfText(value) {
-  return String(value).replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
+function getPdfFontPath() {
+  const candidates = [
+    process.env.PDF_FONT_PATH,
+    path.resolve(__dirname, "../../../node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf"),
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+    "/usr/share/fonts/truetype/liberation2/LiberationSans-Regular.ttf",
+    "/System/Library/Fonts/Supplemental/Arial Unicode.ttf",
+    "/System/Library/Fonts/Supplemental/Arial.ttf",
+    "/Library/Fonts/Arial Unicode.ttf",
+  ].filter(Boolean);
+
+  return candidates.find((fontPath) => fs.existsSync(fontPath));
 }
 
 function buildTicketPdfBuffer({ ticketId, eventTitle, seatLabel, qrCode }) {
-  const lines = [
-    "WeTicket",
-    `Ticket: ${ticketId}`,
-    `Event: ${eventTitle}`,
-    `Seat: ${seatLabel}`,
-    `QR: ${qrCode.slice(0, 48)}...`,
-  ];
-  const streamContent = lines.map((line) => `(${escapePdfText(line)}) Tj T*`).join("\n");
-  const stream = `BT /F1 12 Tf 50 750 Td ${streamContent} ET`;
-  const streamLength = Buffer.byteLength(stream, "utf8");
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    const doc = new PDFDocument({
+      size: "A4",
+      margin: 50,
+      info: {
+        Title: `Ticket ${ticketId}`,
+        Creator: "WeTicket",
+      },
+    });
 
-  const objects = [
-    "1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj",
-    "2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj",
-    "3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >> endobj",
-    `4 0 obj << /Length ${streamLength} >> stream\n${stream}\nendstream endobj`,
-    "5 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj",
-  ];
+    doc.on("data", (chunk) => chunks.push(chunk));
+    doc.on("end", () => resolve(Buffer.concat(chunks)));
+    doc.on("error", reject);
 
-  let pdf = "%PDF-1.4\n";
-  const offsets = [0];
-  for (const obj of objects) {
-    offsets.push(Buffer.byteLength(pdf, "utf8"));
-    pdf += `${obj}\n`;
-  }
+    const fontPath = getPdfFontPath();
+    if (fontPath) {
+      doc.font(fontPath);
+    }
 
-  const xrefOffset = Buffer.byteLength(pdf, "utf8");
-  pdf += `xref\n0 ${objects.length + 1}\n`;
-  pdf += "0000000000 65535 f \n";
-  for (let i = 1; i <= objects.length; i += 1) {
-    pdf += `${String(offsets[i]).padStart(10, "0")} 00000 n \n`;
-  }
-  pdf += `trailer << /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`;
+    doc.fontSize(24).text("WeTicket", { align: "center" });
+    doc.moveDown(0.5);
+    doc.fontSize(18).text("Электронный билет", { align: "center" });
+    doc.moveDown(2);
 
-  return Buffer.from(pdf, "utf8");
+    doc.fontSize(12);
+    doc.text(`ID билета: ${ticketId}`);
+    doc.moveDown(0.75);
+    doc.text(`Мероприятие: ${eventTitle}`);
+    doc.moveDown(0.75);
+    doc.text(`Место: ${seatLabel}`);
+    doc.moveDown(1.5);
+
+    doc.fontSize(14).text("QR-код для проверки");
+    doc.moveDown(0.5);
+    doc.fontSize(10).text(qrCode, {
+      width: 420,
+      continued: false,
+    });
+
+    doc.moveDown(2);
+    doc.fontSize(10).fillColor("#666666").text(
+      "Предъявите этот билет на входе. QR-код должен быть доступен для сканирования.",
+    );
+
+    doc.end();
+  });
 }
 
 async function getTicketPdf(userId, ticketId) {
@@ -152,7 +174,7 @@ async function getTicketPdf(userId, ticketId) {
 
   return {
     filename: `ticket-${ticketId}.pdf`,
-    buffer: buildTicketPdfBuffer({
+    buffer: await buildTicketPdfBuffer({
       ticketId,
       eventTitle: ticket.bookingItem.booking.event.title,
       seatLabel,

@@ -39,6 +39,7 @@ async function issueTokens(user) {
 
 async function register(input) {
   const { email, password, firstName, lastName, phone } = input;
+  const role = input.role === "organizer" ? "organizer" : "client";
   const normalizedEmail = email.trim().toLowerCase();
   const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } });
   if (existing) {
@@ -53,6 +54,16 @@ async function register(input) {
       firstName: firstName.trim(),
       lastName: lastName.trim(),
       phone: phone || null,
+      role,
+      ...(role === "organizer"
+        ? {
+            organizerProfile: {
+              create: {
+                verified: false,
+              },
+            },
+          }
+        : {}),
     },
   });
 

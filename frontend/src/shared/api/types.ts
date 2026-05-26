@@ -25,6 +25,7 @@ export type AuthRegisterRequest = {
   firstName: string;
   lastName: string;
   phone?: string;
+  role: Exclude<UserRole, "admin">;
 };
 
 export type AuthLoginResponse = {

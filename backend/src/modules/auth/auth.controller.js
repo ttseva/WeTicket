@@ -32,6 +32,10 @@ function validateRegisterBody(body) {
   if (body.password.length < 8) {
     throw new HttpError(400, "Password must be at least 8 characters long");
   }
+
+  if (body.role !== undefined && !["client", "organizer"].includes(body.role)) {
+    throw new HttpError(400, "Field 'role' must be either 'client' or 'organizer'");
+  }
 }
 
 function validateLoginBody(body) {

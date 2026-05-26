@@ -22,7 +22,11 @@ services:
       - key: JWT_REFRESH_TTL
         value: 7d
       - key: PRISMA_SCHEMA_DISABLE_ADVISORY_LOCK
-        value: true
+        value: "1"
+      - key: EXPIRATION_JOB_ENABLED
+        value: "true"
+      - key: EXPIRATION_JOB_INTERVAL_MS
+        value: "60000"
 
   - type: web
     name: weticket-frontend
@@ -30,7 +34,10 @@ services:
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        sync: false
     routes:
       - type: rewrite
-        source: /*
+        source: "/*"
         destination: /index.html 

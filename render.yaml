@@ -21,6 +21,8 @@ services:
         value: 15m
       - key: JWT_REFRESH_TTL
         value: 7d
+      - key: PRISMA_SCHEMA_DISABLE_ADVISORY_LOCK
+        value: true
 
   - type: web
     name: weticket-frontend
